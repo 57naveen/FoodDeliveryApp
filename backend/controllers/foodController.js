@@ -3,7 +3,6 @@ import fs from 'fs'
 
 
 
-// add food item
 const addFood = async (req, res) => {
     try {
         // Check if file is uploaded
@@ -25,35 +24,34 @@ const addFood = async (req, res) => {
             price: req.body.price,
             category: req.body.category,
             image: image_filename
-        })
+        });
 
         try {
-
             await food.save();
-            res.json({
+            // Send a success response and return to prevent further execution
+            return res.json({
                 success: true,
-                message: "food Added"
-            })
+                message: "Food added successfully",
+                file: image_filename
+            });
         } catch (error) {
-            console.log(error)
-            res.json({
+            console.log(error);
+            // Send an error response and return
+            return res.status(500).json({
                 success: false,
-                message: "error"
-            })
+                message: "Error saving food"
+            });
         }
 
-        // Further processing of the request (e.g., saving food data to the database)
-        res.status(200).json({
-            message: "Food added successfully",
-            file: image_filename
-        });
     } catch (error) {
-        res.status(500).json({
+        // Send an error response and return
+        return res.status(500).json({
             message: "Error adding food",
             error
         });
     }
 };
+
 
 
 //all food list
