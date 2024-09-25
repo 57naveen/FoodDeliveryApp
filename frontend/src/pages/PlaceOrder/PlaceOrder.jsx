@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react'
 import axios from 'axios'
-
+import { useNavigate } from 'react-router-dom';
 import './PlaceOrder.css'
 import { StoreContext } from '../../context/StoreContext'
 
@@ -31,36 +31,58 @@ const PlaceOrder = () => {
   //     console.log(data)
   //  },[data])
 
-  const placeOrder = async (event)=>{
-
+  const placeOrder = async (event) => {
     event.preventDefault();
     let orderItems = [];
-    food_list.map((item)=>{
-      if(cartItems[cartItems._id]>0)
-      {
-        let itemInfo =item;
-        itemInfo["quantity"]=cartItems[item._id];
-        orderItems.push(itemInfo)
+  
+    // Build the orderItems array properly
+    food_list.map((item) => {
+      if (cartItems[item._id] > 0) {
+        let itemInfo = item;
+        itemInfo["quantity"] = cartItems[item._id];
+        orderItems.push(itemInfo);
       }
-    })
-      let orderData = {
-        address:data,
-        items:orderItems,
-        amount:getTotalCartAmount()+2,
-      }
-
-      let response = await axios.post(url+"/api/order/place",orderData,{Headers:{token}})
-      if(response.data.success)
-      {
-        const {session_url} =response.data;
+    });
+  
+    // Build the order data
+    let orderData = {
+      address: data,
+      items: orderItems,
+      amount: getTotalCartAmount() + 2, // Total amount including delivery
+    };
+  
+    try {
+      // Post the order data to the backend
+      let response = await axios.post(url + "/api/order/place", orderData, { headers: { token } });
+  
+      // If successful, redirect to Stripe session URL
+      if (response.data.success) {
+        const { session_url } = response.data;
         window.location.replace(session_url);
+      } else {
+        // Log error message from backend
+        console.error("Error from backend: ", response.data.message);
+        alert("Error: " + response.data.message);
       }
+    } catch (error) {
+      // Catch any errors during request
+      console.error("Error placing order: ", error);
+      alert("Error placing order: " + error.message);
+    }
+  };
 
-      else{
-        alert("Error");
-      }
-  }
+  const navigate = useNavigate();
 
+  useEffect(()=>{
+    if(!token)
+    {
+      navigate("/cart")
+    }else if(getTotalCartAmount()===0)
+    {
+      navigate("/cart")
+    }
+  },[token])
+  
   return (
     <form onSubmit={placeOrder} className='place-order'>
         <div className="place-order-left">
